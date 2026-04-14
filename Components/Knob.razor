@@ -1,0 +1,66 @@
+<div class="knob-wrap">
+    <svg width="42" height="42" viewBox="0 0 42 42" class="knob-svg">
+
+        <path d="@BackgroundArc" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" />
+
+        @if (Value > 0)
+        {
+            <path d="@ValueArc" fill="none" stroke="@Color" stroke-width="2.5" stroke-linecap="round" />
+        }
+
+        <circle cx="21" cy="21" r="11" fill="#2a2a3e" />
+        <circle cx="21" cy="21" r="9"  fill="#1a1a2e" />
+
+        <line x1="21" y1="21"
+              x2="@IndicatorX.ToString("F1")"
+              y2="@IndicatorY.ToString("F1")"
+              stroke="white" stroke-width="1.5" stroke-linecap="round" />
+
+        <circle cx="21" cy="21" r="1.5" fill="#555" />
+    </svg>
+
+    <div class="knob-label">@Label</div>
+    <div class="knob-value" style="color:@Color">@Value</div>
+</div>
+
+@code {
+    [Parameter] public required string Label { get; set; }
+    [Parameter] public required int    Value { get; set; }
+    [Parameter] public          string Color { get; set; } = "#3b82f6";
+
+    private const double CX = 21, CY = 21, R = 14, LR = 9;
+
+    private double ValueAngleDeg => (210.0 + Value * 30.0) % 360.0;
+    private double ValueAngleRad => ValueAngleDeg * Math.PI / 180.0;
+
+    private double IndicatorX => CX + LR * Math.Sin(ValueAngleRad);
+    private double IndicatorY => CY - LR * Math.Cos(ValueAngleRad);
+
+    private static (double x, double y) Point(double angleDeg)
+    {
+        double rad = angleDeg * Math.PI / 180.0;
+        return (CX + R * Math.Sin(rad), CY - R * Math.Cos(rad));
+    }
+
+    private static string BackgroundArc
+    {
+        get
+        {
+            var (sx, sy) = Point(210);
+            var (ex, ey) = Point(150);
+            return $"M {sx:F1},{sy:F1} A {R} {R} 0 1 1 {ex:F1},{ey:F1}";
+        }
+    }
+
+    private string ValueArc
+    {
+        get
+        {
+            var (sx, sy) = Point(210);
+            var (ex, ey) = Point(ValueAngleDeg);
+            double arcDeg   = Value * 30.0;
+            int    largeArc = arcDeg > 180 ? 1 : 0;
+            return $"M {sx:F1},{sy:F1} A {R} {R} 0 {largeArc} 1 {ex:F1},{ey:F1}";
+        }
+    }
+}

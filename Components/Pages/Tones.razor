@@ -1,0 +1,58 @@
+@page "/tones"
+@rendermode InteractiveServer
+@using GuitarChordExplorer.Models
+@using GuitarChordExplorer.Services
+
+<PageTitle>Tone Settings — Guitar Chord Explorer</PageTitle>
+
+<div class="hero">
+    <h1 class="hero-title">Tone Settings</h1>
+    <p class="hero-sub">Amp and guitar settings for 7 essential genres — dial in your sound fast.</p>
+</div>
+
+<div class="tones-grid">
+    @foreach (var preset in ToneService.Presets)
+    {
+        <div class="tone-card" style="border-top-color: @preset.Color">
+
+            <div class="tone-genre" style="color: @preset.Color">@preset.Genre</div>
+            <p class="tone-desc">@preset.Description</p>
+
+            <div class="tone-gear">
+                <div class="tone-gear-row">
+                    <span class="tone-gear-icon">🎛</span>
+                    <span><strong>Amp:</strong> @preset.AmpType</span>
+                </div>
+                <div class="tone-gear-row">
+                    <span class="tone-gear-icon">🎸</span>
+                    <span><strong>Pickup:</strong> @preset.Pickup</span>
+                </div>
+            </div>
+
+            <div class="tone-knobs-label">EQ &amp; Controls</div>
+            <div class="tone-knobs">
+                <Knob Label="Gain"     Value="@preset.Gain"     Color="@preset.Color" />
+                <Knob Label="Bass"     Value="@preset.Bass"     Color="@preset.Color" />
+                <Knob Label="Mid"      Value="@preset.Mid"      Color="@preset.Color" />
+                <Knob Label="Treble"   Value="@preset.Treble"   Color="@preset.Color" />
+                <Knob Label="Presence" Value="@preset.Presence" Color="@preset.Color" />
+                <Knob Label="Reverb"   Value="@preset.Reverb"   Color="@preset.Color" />
+            </div>
+
+            <div class="tone-section-label">Effects Chain</div>
+            <div class="tone-effects">
+                @foreach (var fx in preset.Effects)
+                {
+                    <span class="tone-effect-tag" style="border-color: @preset.Color; color: @preset.Color">
+                        @fx
+                    </span>
+                }
+            </div>
+
+            <div class="tone-section-label">Listen To</div>
+            <div class="tone-artists">
+                @string.Join(" · ", preset.Artists)
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,58 @@
+@page "/scales"
+@rendermode InteractiveServer
+@using GuitarChordExplorer.Models
+@using GuitarChordExplorer.Services
+@inject ScaleService ScaleService
+
+<PageTitle>Scales — Guitar Chord Explorer</PageTitle>
+
+<div class="hero">
+    <h1 class="hero-title">Scale Explorer</h1>
+    <p class="hero-sub">Pick a root note — see the most useful guitar scales built from it.</p>
+</div>
+
+<div class="controls">
+    <label class="control-label" for="rootSelect">Root Note</label>
+    <select id="rootSelect" class="key-select" @bind="SelectedRoot" @bind:after="RefreshScales">
+        @foreach (var note in ScaleService.AvailableRoots)
+        {
+            <option value="@note">@note</option>
+        }
+    </select>
+</div>
+
+@if (scales.Count > 0)
+{
+    <div class="scales-grid">
+        @foreach (var scale in scales)
+        {
+            <div class="scale-card">
+                <div class="scale-name">@SelectedRoot @scale.Name</div>
+                <div class="scale-diagram-area">
+                    <ScaleDiagram Root="@SelectedRoot" Notes="@scale.Notes" />
+                </div>
+                <div class="scale-notes-row">
+                    @foreach (var note in scale.Notes)
+                    {
+                        <span class="@(note == SelectedRoot ? "scale-note-root" : "scale-note")">@note</span>
+                    }
+                </div>
+                <div class="scale-pattern">@scale.Pattern</div>
+                <div class="scale-desc">@scale.Description</div>
+                <div class="scale-count">@scale.Notes.Length notes</div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private string SelectedRoot = "A";
+    private List<ScaleInfo> scales = [];
+
+    protected override void OnInitialized() => RefreshScales();
+
+    private void RefreshScales()
+    {
+        scales = ScaleService.GetScales(SelectedRoot);
+    }
+}

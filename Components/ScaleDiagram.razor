@@ -1,0 +1,135 @@
+@using GuitarChordExplorer.Models
+
+<div class="scale-diagram-wrap">
+    <div class="scale-position-label">@PositionLabel</div>
+
+    <svg width="310" height="122" viewBox="0 0 310 122" class="scale-svg">
+
+        @if (StartFret == 0)
+        {
+            <rect x="22" y="10" width="5" height="90" fill="#1a1a2e" rx="1" />
+        }
+        else
+        {
+            <line x1="22" y1="10" x2="22" y2="100" stroke="#999" stroke-width="1.5" />
+        }
+
+        @for (int s = 0; s < 6; s++)
+        {
+            var sy = SY(s);
+            <line x1="22" y1="@sy" x2="242" y2="@sy" stroke="#bbb" stroke-width="1.5" />
+        }
+
+        @for (int k = 1; k <= 5; k++)
+        {
+            var fx = 22 + k * 44;
+            <line x1="@fx" y1="10" x2="@fx" y2="100" stroke="#ccc" stroke-width="1" />
+        }
+
+        @for (int s = 0; s < 6; s++)
+        {
+            var sy = SY(s);
+            var label = Ordinal(s + 1) + " String";
+            @((MarkupString)$"<text x='248' y='{sy + 4}' font-size='9' fill='#999'>{label}</text>")
+        }
+
+        @((MarkupString)"<text x='14' y='116' font-size='8' fill='#aaa'>Fret</text>")
+        @for (int j = 0; j < 5; j++)
+        {
+            var cx = DX(j);
+            var fretNum = FirstFret + j;
+            @((MarkupString)$"<text x='{cx}' y='116' text-anchor='middle' font-size='9' fill='#aaa'>{fretNum}</text>")
+        }
+
+        @if (StartFret == 0)
+        {
+            @foreach (var dot in Dots.Where(d => d.Fret == 0))
+            {
+                var sy = SY(dot.StringIndex);
+                if (dot.IsRoot)
+                {
+                    <circle cx="12" cy="@sy" r="5" fill="#e74c3c" />
+                }
+                else
+                {
+                    <circle cx="12" cy="@sy" r="5" fill="none" stroke="#1a1a2e" stroke-width="1.5" />
+                }
+            }
+        }
+
+        @foreach (var dot in Dots.Where(d => d.Fret > 0))
+        {
+            var cx = DX(dot.Fret - FirstFret);
+            var sy = SY(dot.StringIndex);
+            if (dot.IsRoot)
+            {
+                <circle cx="@cx" cy="@sy" r="8" fill="#e74c3c" />
+            }
+            else
+            {
+                <circle cx="@cx" cy="@sy" r="8" fill="#1a1a2e" />
+            }
+        }
+    </svg>
+
+    <div class="scale-legend">
+        <span class="legend-root-dot"></span><span class="legend-lbl">root</span>
+        <span class="legend-note-dot"></span><span class="legend-lbl">note</span>
+    </div>
+</div>
+
+@code {
+    [Parameter] public required string   Root  { get; set; }
+    [Parameter] public required string[] Notes { get; set; }
+
+    private static readonly string[] Chromatic = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+    private static readonly int[]    OpenNotes = [4, 11, 7, 2, 9, 4];
+
+    private record Dot(int StringIndex, int Fret, bool IsRoot);
+
+    private int RootIdx   => Array.IndexOf(Chromatic, Root);
+    private int StartFret => (RootIdx - 4 + 12) % 12;
+    private int FirstFret => StartFret == 0 ? 1 : StartFret;
+
+    private string PositionLabel => StartFret == 0
+        ? "Open Position"
+        : $"{Ordinal(StartFret)} Fret Position";
+
+    private static int SY(int s) => 10 + s * 18;
+    private static int DX(int cell) => 22 + cell * 44 + 22;
+
+    private static string Ordinal(int n) => n switch
+    {
+        1 => "1st", 2 => "2nd", 3 => "3rd", _ => $"{n}th"
+    };
+
+    private IReadOnlyList<Dot> Dots
+    {
+        get
+        {
+            int rootIdx   = RootIdx;
+            int startFret = StartFret;
+            int firstFret = FirstFret;
+            int lastFret  = startFret == 0 ? 5 : startFret + 4;
+            var scaleSet  = Notes.Select(n => Array.IndexOf(Chromatic, n)).ToHashSet();
+
+            var dots = new List<Dot>();
+            for (int s = 0; s < 6; s++)
+            {
+                if (startFret == 0)
+                {
+                    int openNote = OpenNotes[s];
+                    if (scaleSet.Contains(openNote))
+                        dots.Add(new Dot(s, 0, openNote == rootIdx));
+                }
+                for (int f = firstFret; f <= lastFret; f++)
+                {
+                    int noteIdx = (OpenNotes[s] + f) % 12;
+                    if (scaleSet.Contains(noteIdx))
+                        dots.Add(new Dot(s, f, noteIdx == rootIdx));
+                }
+            }
+            return dots;
+        }
+    }
+}

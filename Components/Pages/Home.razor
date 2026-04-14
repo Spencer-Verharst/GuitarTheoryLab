@@ -1,0 +1,138 @@
+@page "/"
+@rendermode InteractiveServer
+@using GuitarChordExplorer.Models
+@using GuitarChordExplorer.Services
+@inject MusicTheoryService TheoryService
+@inject ChordLibraryService ChordLibrary
+
+<PageTitle>Guitar Chord Explorer</PageTitle>
+
+<div class="hero">
+    <h1 class="hero-title">Guitar Chord Explorer</h1>
+    <p class="hero-sub">Pick a key — see every chord that belongs in it, with fretboard diagrams. No capo required.</p>
+</div>
+
+<div class="controls">
+    <label class="control-label" for="keySelect">Key</label>
+    <select id="keySelect" class="key-select" @bind="SelectedKey" @bind:after="RefreshChords">
+        <optgroup label="Major Keys">
+            @foreach (var k in MusicTheoryService.AvailableKeys)
+            {
+                <option value="@k">@k Major</option>
+            }
+        </optgroup>
+        <optgroup label="Minor Keys">
+            @foreach (var k in MusicTheoryService.AvailableMinorKeys)
+            {
+                <option value="@k">@k[..^1] minor</option>
+            }
+        </optgroup>
+    </select>
+</div>
+
+@if (chords.Count > 0)
+{
+    <section class="scale-info">
+        <h2>Key of <span class="key-highlight">@KeyDisplayName</span></h2>
+        <p class="scale-notes">
+            Scale notes: <strong>@string.Join(" – ", scaleNotes)</strong>
+        </p>
+        <p class="theory-blurb">
+            @if (IsMinorKey)
+            {
+                <text>Every natural minor key has 7 diatonic chords — 2 major, 3 minor, 1 diminished, and 1 extra major.
+                These are the chords that sound "at home" together, no capo adjustments needed.</text>
+            }
+            else
+            {
+                <text>Every major key has 7 diatonic chords built from its scale — 3 major, 3 minor, and 1 diminished.
+                These are the chords that sound "at home" together, no capo adjustments needed.</text>
+            }
+        </p>
+    </section>
+
+    <div class="chords-grid">
+        @foreach (var chord in chords)
+        {
+            var voicing = ChordLibrary.GetVoicing(chord.Root, chord.Quality);
+            <ChordDiagram Info="chord" Voicing="voicing" />
+        }
+    </div>
+
+    <section class="chord-list-section">
+        <h3>Quick Reference</h3>
+        <table class="chord-table">
+            <thead>
+                <tr>
+                    <th>Degree</th>
+                    <th>Chord</th>
+                    <th>Quality</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var chord in chords)
+                {
+                    <tr class="@RowClass(chord)">
+                        <td><strong>@chord.RomanNumeral</strong></td>
+                        <td>@chord.ChordName</td>
+                        <td>@chord.QualityLabel</td>
+                        <td>@ChordRole(chord.ScaleDegree)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}
+
+@code {
+    private string SelectedKey = "C";
+    private List<ChordInfo> chords = [];
+    private List<string> scaleNotes = [];
+
+    private bool IsMinorKey => MusicTheoryService.AvailableMinorKeys.Contains(SelectedKey);
+
+    private string KeyDisplayName => IsMinorKey
+        ? $"{SelectedKey[..^1]} minor"
+        : $"{SelectedKey} Major";
+
+    protected override void OnInitialized() => RefreshChords();
+
+    private void RefreshChords()
+    {
+        chords = TheoryService.GetDiatonicChords(SelectedKey);
+        scaleNotes = chords.Select(c => c.Root).ToList();
+    }
+
+    private static string RowClass(ChordInfo c) => c.Quality switch
+    {
+        ChordQuality.Major      => "row-major",
+        ChordQuality.Minor      => "row-minor",
+        ChordQuality.Diminished => "row-dim",
+        _                       => ""
+    };
+
+    private string ChordRole(int degree) => IsMinorKey
+        ? degree switch
+        {
+            1 => "Tonic — home chord (minor)",
+            2 => "Supertonic — tense, diminished",
+            3 => "Mediant — relative major",
+            4 => "Subdominant — departure from home",
+            5 => "Subtonic — softer pull back to i",
+            6 => "Submediant — brighter major chord",
+            7 => "Subtonic — major, common in rock/pop",
+            _ => ""
+        }
+        : degree switch
+        {
+            1 => "Tonic — feels like \"home\"",
+            2 => "Supertonic — tension, often resolves to V",
+            3 => "Mediant — softer tension",
+            4 => "Subdominant — departure from home",
+            5 => "Dominant — strong pull back to I",
+            6 => "Submediant — relative minor feel",
+            7 => "Leading tone — strong tension",
+            _ => ""
+        };
+}
