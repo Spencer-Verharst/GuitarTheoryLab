@@ -4,7 +4,7 @@ using GuitarChordExplorer.Models;
 
 public class CapoService
 {
-    private static readonly string[] Chromatic =
+    public static readonly string[] Chromatic =
         ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
 
     private static readonly string[] OpenKeys = ["E", "A", "D", "G", "C"];
