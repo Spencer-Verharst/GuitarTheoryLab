@@ -26,11 +26,13 @@ public class CapoService
                 bestFret = fret;
                 bestGuitarKey = openKey;
             }
-
-            return new CapoInfo
-            {
-                
-            }
         }
+
+        return new CapoInfo
+        {
+            TargetKey = targetKey,
+            CapoFret = bestFret,
+            GuitarKey = bestGuitarKey
+        };
     }
 }
