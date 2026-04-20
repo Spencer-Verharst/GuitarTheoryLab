@@ -1,0 +1,45 @@
+@page "/capo"
+@rendermode InteractiveServer
+@using GuitarChordExplorer.Models
+@using GuitarChordExplorer.Services
+@inject CapoService CapoService
+
+<PageTitle>Capo Calculator - Guitar Theory Lab</PageTitle>
+
+<div class="hero">
+    <h1 class="hero-title">Capo Calculator</h1>
+    <p class="hero-sub">Pick a key - See where to put your capo.</p>
+</div>
+
+<div class="controls">
+    <label class="control-label" for="keySelect">Key</label>
+    <select id="keySelect" class="key-select" @bind="SelectedKey" @bind:after="RefreshCapo">
+        <optgroup label="Keys">
+            @foreach (var k in CapoService.Chromatic)
+            {
+                <option value="@k">@k </option>
+            }
+        </optgroup>
+    </select>
+</div>
+
+ @if (Result != null)
+  {
+      <div class="result">
+          <p>Place capo on fret <strong>@Result.CapoFret</strong></p>
+          <p>Use <strong>@Result.GuitarKey</strong> chord shapes</p>
+      </div>
+  }
+
+@code
+{
+    private string SelectedKey = "G";
+    private CapoInfo? Result;
+
+     protected override void OnInitialized() => RefreshCapo(); 
+
+    private void RefreshCapo()
+    {
+        Result = CapoService.GetCapo(SelectedKey);
+    }
+}

@@ -1,3 +1,4 @@
+using System.ComponentModel.Design.Serialization;
 using GuitarChordExplorer.Components;
 using GuitarChordExplorer.Services;
 
@@ -7,6 +8,7 @@ builder.Services.AddSingleton<MusicTheoryService>();
 builder.Services.AddSingleton<ChordLibraryService>();
 builder.Services.AddSingleton<ScaleService>();
 builder.Services.AddSingleton<ToneService>();
+builder.Services.AddSingleton<CapoService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
