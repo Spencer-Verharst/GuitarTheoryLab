@@ -3,12 +3,13 @@
 @using GuitarChordExplorer.Models
 @using GuitarChordExplorer.Services
 @inject CapoService CapoService
+@inject ChordLibraryService ChordLibraryService
 
 <PageTitle>Capo Calculator - Guitar Theory Lab</PageTitle>
 
 <div class="hero">
     <h1 class="hero-title">Capo Calculator</h1>
-    <p class="hero-sub">Pick a key - See where to put your capo.</p>
+    <p class="hero-sub">Pick a key and chord shape - See where to put your capo.</p>
 </div>
 
 <div class="controls">
@@ -21,22 +22,41 @@
             }
         </optgroup>
     </select>
+
+    <label class="control-label" for="qualitySelect">Chord Shape</label>
+    <select id="qualitySelect" class="key-select" @bind="SelectedQuality" @bind:after="RefreshCapo">
+        <option value="@ChordQuality.Major">Major</option>
+        <option value="@ChordQuality.Minor">Minor</option>
+        <option value="@ChordQuality.Diminished">Diminished</option>
+    </select>
 </div>
 
- @if (Result != null)
-  {
-      <div class="result">
-          <p>Place capo on fret <strong>@Result.CapoFret</strong></p>
-          <p>Use <strong>@Result.GuitarKey</strong> chord shapes</p>
-      </div>
-  }
+@if (Result != null)
+{
+    var voicing = ChordLibraryService.GetVoicing(Result.GuitarKey, SelectedQuality);
+    var info = new ChordInfo
+    {
+        Root = Result.GuitarKey,
+        Quality = SelectedQuality,
+        RomanNumeral = "",
+        ScaleDegree = 0
+    };
+
+    <div class="result">
+        <p>Place capo on fret <strong>@Result.CapoFret</strong></p>
+        <p>Use <strong>@Result.GuitarKey</strong> chord shapes</p>
+    </div>
+
+    <ChordDiagram Info="info" Voicing="voicing" />
+}
 
 @code
 {
     private string SelectedKey = "G";
+    private ChordQuality SelectedQuality = ChordQuality.Major;
     private CapoInfo? Result;
 
-     protected override void OnInitialized() => RefreshCapo(); 
+    protected override void OnInitialized() => RefreshCapo();
 
     private void RefreshCapo()
     {
