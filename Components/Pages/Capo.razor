@@ -3,63 +3,75 @@
 @using GuitarChordExplorer.Models
 @using GuitarChordExplorer.Services
 @inject CapoService CapoService
-@inject ChordLibraryService ChordLibraryService
+@inject ChordLibraryService ChordLibrary
 
 <PageTitle>Capo Calculator - Guitar Theory Lab</PageTitle>
 
 <div class="hero">
     <h1 class="hero-title">Capo Calculator</h1>
-    <p class="hero-sub">Pick a key and chord shape - See where to put your capo.</p>
+    <p class="hero-sub">Pick a key and chord shape — find out where to put your capo.</p>
 </div>
 
 <div class="controls">
-    <label class="control-label" for="keySelect">Key</label>
-    <select id="keySelect" class="key-select" @bind="SelectedKey" @bind:after="RefreshCapo">
+    <label class="control-label" for="keySelect">Target Key</label>
+    <select id="keySelect" class="key-select" @bind="SelectedKey" @bind:after="Refresh">
         <optgroup label="Keys">
             @foreach (var k in CapoService.Chromatic)
             {
-                <option value="@k">@k </option>
+                <option value="@k">@k</option>
             }
         </optgroup>
     </select>
 
-    <label class="control-label" for="qualitySelect">Chord Shape</label>
-    <select id="qualitySelect" class="key-select" @bind="SelectedQuality" @bind:after="RefreshCapo">
-        <option value="@ChordQuality.Major">Major</option>
-        <option value="@ChordQuality.Minor">Minor</option>
-        <option value="@ChordQuality.Diminished">Diminished</option>
+    <label class="control-label" for="shapeSelect">Chord Shape</label>
+    <select id="shapeSelect" class="key-select" @bind="SelectedShape" @bind:after="Refresh">
+        @foreach (var s in CapoService.ShapeKeys)
+        {
+            <option value="@s">@s shape</option>
+        }
     </select>
 </div>
 
-@if (Result != null)
-{
-    var voicing = ChordLibraryService.GetVoicing(Result.GuitarKey, SelectedQuality);
-    var info = new ChordInfo
+<section class="scale-info">
+    <h2>Key of <span class="key-highlight">@SelectedKey</span> using <span class="key-highlight">@SelectedShape</span> shapes</h2>
+    @if (CapoFret == 0)
     {
-        Root = Result.GuitarKey,
-        Quality = SelectedQuality,
-        RomanNumeral = "",
-        ScaleDegree = 0
-    };
+        <p class="scale-notes">No capo needed — play <strong>@SelectedShape</strong> shapes open.</p>
+    }
+    else
+    {
+        <p class="scale-notes">Place capo on fret <strong>@CapoFret</strong> and play <strong>@SelectedShape</strong> chord shapes.</p>
+    }
+</section>
 
-    <div class="result">
-        <p>Place capo on fret <strong>@Result.CapoFret</strong></p>
-        <p>Use <strong>@Result.GuitarKey</strong> chord shapes</p>
-    </div>
-
-    <ChordDiagram Info="info" Voicing="voicing" />
-}
+<div class="chords-grid">
+    @foreach (var quality in Qualities)
+    {
+        var info = new ChordInfo
+        {
+            Root = SelectedShape,
+            Quality = quality,
+            RomanNumeral = "",
+            ScaleDegree = 0
+        };
+        var voicing = ChordLibrary.GetVoicing(SelectedShape, quality);
+        <ChordDiagram Info="info" Voicing="voicing" />
+    }
+</div>
 
 @code
 {
-    private string SelectedKey = "G";
-    private ChordQuality SelectedQuality = ChordQuality.Major;
-    private CapoInfo? Result;
+    private string SelectedKey   = "G";
+    private string SelectedShape = "G";
+    private int    CapoFret;
 
-    protected override void OnInitialized() => RefreshCapo();
+    private static readonly ChordQuality[] Qualities =
+        [ChordQuality.Major, ChordQuality.Minor, ChordQuality.Diminished];
 
-    private void RefreshCapo()
+    protected override void OnInitialized() => Refresh();
+
+    private void Refresh()
     {
-        Result = CapoService.GetCapo(SelectedKey);
+        CapoFret = CapoService.GetCapoFret(SelectedKey, SelectedShape);
     }
 }

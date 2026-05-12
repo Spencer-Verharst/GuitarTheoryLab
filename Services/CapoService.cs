@@ -9,6 +9,8 @@ public class CapoService
 
     private static readonly string[] OpenKeys = ["E", "A", "D", "G", "C"];
 
+    public static readonly string[] ShapeKeys = ["E", "A", "D", "G", "C"];
+
     public CapoInfo GetCapo(string targetKey)
     {
         int targetIdx = Array.IndexOf(Chromatic, targetKey);
@@ -34,5 +36,12 @@ public class CapoService
             CapoFret = bestFret,
             GuitarKey = bestGuitarKey
         };
+    }
+
+    public int GetCapoFret(string targetKey, string shapeKey)
+    {
+        int targetIdx = Array.IndexOf(Chromatic, targetKey);
+        int shapeIdx  = Array.IndexOf(Chromatic, shapeKey);
+        return (targetIdx - shapeIdx + 12) % 12;
     }
 }
